@@ -1,50 +1,45 @@
 package com.andymur.configuration;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
+import io.awspring.cloud.sqs.operations.SqsTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.aws.messaging.core.QueueMessagingTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.cloud.aws.messaging.config.annotation.EnableSqs;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+
+import java.net.URI;
 
 @Configuration
-@EnableSqs
 public class AwsSQSConfig {
 
-    @Value("${cloud.aws.credentials.access-key}")
+    @Value("${spring.cloud.aws.credentials.access-key}")
     private String accessKey;
 
-    @Value("${cloud.aws.credentials.secret-key}")
+    @Value("${spring.cloud.aws.credentials.secret-key}")
     private String secretKey;
 
-    @Value("${cloud.aws.region.static}")
+    @Value("${spring.cloud.aws.region}")
     private String region;
 
-    @Value("${cloud.aws.sqs.endpoint}")
+    @Value("${spring.cloud.aws.sqs.endpoint}")
     private String endpoint;
 
+
     @Bean
-    public QueueMessagingTemplate queueMessagingTemplate() {
-        return new QueueMessagingTemplate(amazonSQSAsync());
+    SqsAsyncClient sqsAsyncClient(){
+        return SqsAsyncClient
+                .builder()
+                .region(Region.of(region))
+                .endpointOverride(URI.create(endpoint))
+                .credentialsProvider(StaticCredentialsProvider
+                        .create(AwsBasicCredentials.create(accessKey, secretKey)))
+                .build();
     }
 
     @Bean
-    @Primary
-    AmazonSQSAsync amazonSQSAsync() {
-        AmazonSQSAsyncClientBuilder amazonSQSAsyncClientBuilder =
-                AmazonSQSAsyncClientBuilder.standard();
-
-        BasicAWSCredentials basicAWSCredentials =
-                new BasicAWSCredentials(accessKey, secretKey);
-
-        amazonSQSAsyncClientBuilder.setEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region));
-        amazonSQSAsyncClientBuilder.withCredentials(new AWSStaticCredentialsProvider(basicAWSCredentials));
-
-        return amazonSQSAsyncClientBuilder.build();
+    public SqsTemplate sqsTemplate(SqsAsyncClient sqsAsyncClient){
+        return SqsTemplate.builder().sqsAsyncClient(sqsAsyncClient).build();
     }
 }

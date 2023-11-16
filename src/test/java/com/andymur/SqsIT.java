@@ -1,6 +1,5 @@
 package com.andymur;
 
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.andymur.configuration.SqsTestConfig;
 import com.andymur.messaging.Sender;
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,8 @@ import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 @ActiveProfiles("test")
@@ -28,7 +29,7 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 })
 @Import(SqsTestConfig.class)
 public class SqsIT {
-    private static DockerImageName LOCALSTACK_IMAGE = DockerImageName.parse("localstack/localstack");
+    private static final DockerImageName LOCALSTACK_IMAGE = DockerImageName.parse("localstack/localstack");
     @Container
     public static LocalStackContainer LOCALSTACK_CONTAINER = new LocalStackContainer(LOCALSTACK_IMAGE)
             .withServices(SQS);
@@ -37,12 +38,12 @@ public class SqsIT {
      */
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
-        registry.add("cloud.aws.sqs.endpoint",
+        registry.add("spring.cloud.aws.sqs.endpoint",
                 () -> LOCALSTACK_CONTAINER.getEndpointOverride(SQS).toString());
     }
 
     @Autowired
-    AmazonSQS amazonSQS;
+    SqsAsyncClient amazonSQS;
 
     @Autowired
     private Sender sender;
@@ -52,8 +53,7 @@ public class SqsIT {
 
     @Test
     public void test() {
-        final String qName = "a";
-        amazonSQS.createQueue(qName);
+        amazonSQS.createQueue(CreateQueueRequest.builder().queueName(qname).build());
         sender.send(qname);
     }
 }

@@ -20,10 +20,20 @@ cloud:
         wait-timeout: 20        # 20s
         back-off-time: 10000    # 10s
 
+spring:
+  cloud:
+    aws:
+      sqs:
+        endpoint: http://localstack:4566
+      credentials:
+        access-key: localstackAccessKeyId
+        secret-key: localstackSecretAccessKey
+      region: sa-east-1
+
 logging:
   level:
     io.awspring.cloud.messaging.core: info
     io.awspring.cloud.messaging.listener: info
     com.amazonaws.services.sqs: debug
 
-qname: "a"
+qname: "test-queue"
