@@ -1,0 +1,39 @@
+cloud:
+  aws:
+    stack:
+      auto: false
+      enabled: false
+    credentials:
+      access-key: localstackAccessKeyId
+      secret-key: localstackSecretAccessKey
+    region:
+      static: sa-east-1
+    sqs:
+      endpoint: http://localstack:4566
+      listener:
+        auto-startup: false
+        fail-on-missing-queue: false
+        default-deletion-policy: NO_REDRIVE
+        queue-stop-timeout: 200
+        max-number-of-messages: 10
+        visibility-timeout: 30  # 30s
+        wait-timeout: 20        # 20s
+        back-off-time: 10000    # 10s
+
+spring:
+  cloud:
+    aws:
+      sqs:
+        endpoint: http://localstack:4566
+      credentials:
+        access-key: localstackAccessKeyId
+        secret-key: localstackSecretAccessKey
+      region: sa-east-1
+
+logging:
+  level:
+    io.awspring.cloud.messaging.core: info
+    io.awspring.cloud.messaging.listener: info
+    com.amazonaws.services.sqs: debug
+
+qname: "test-queue"
